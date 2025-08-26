@@ -1,0 +1,234 @@
+local repo = 'https://raw.githubusercontent.com/deividcomsono/Obsidian/main/'
+
+local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
+local Options = Library.Options
+local Toggles = Library.Toggles
+
+
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+
+if not table.clone then
+    table.clone = function(t)
+        local nt = {}
+        for k,v in pairs(t) do nt[k] = v end
+        return nt
+    end
+end
+
+Library.ShowToggleFrameInKeybinds = true 
+Library.ShowCustomCursor = true
+Library.NotifySide = "Right"
+
+local Window = Library:CreateWindow({
+    Title = ' 被遗弃｜BETATEST',
+    Footer = "正式版 V7.0.0",
+    Icon = 106397684977541,
+    Center = true,
+    AutoShow = true,
+    Resizable = true,
+    ShowCustomCursor = true,
+    NotifySide = "Right",
+    TabPadding = 8,
+    MenuFadeTime = 0
+})
+
+local Tabs = {
+    new = Window:AddTab('公告', 'user'),
+    Main = Window:AddTab('快捷功能区','house'),
+    Aimbot = Window:AddTab('自瞄区','earth'),
+    Esp = Window:AddTab('绘制区','eye'),
+    tzq = Window:AddTab('通知提示','eye'),
+    ani = Window:AddTab('反效果区','file'),
+    Max = Window:AddTab('动作区','file'),
+    Sat = Window:AddTab('体力区','moon'),
+    zdg = Window:AddTab('自动格挡','file'),
+    zdx = Window:AddTab('自动修机','moon'),
+    lol = Window:AddTab('披萨区','earth'),
+    tfz = Window:AddTab('塔夫炸弹','moon'),
+    ["UI Settings"] = Window:AddTab('UI调试', 'settings')
+}
+
+local _env = getgenv and getgenv() or {}
+local _hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+
+local new = Tabs.new:AddRightGroupbox('V7.0.0版本更新内容')
+
+new:AddLabel("[+]添加1x4弹窗 反约翰多技能")
+new:AddLabel("[+]修复 自动修机")
+new:AddLabel("[+]修复 修机绘制")
+new:AddLabel("[+]添加 完美自动格挡(国内第一 第二宿傩🤓)")
+
+
+
+
+
+
+
+local KillerSurvival = Tabs.Main:AddLeftGroupbox("调节功能")
+
+game.Players.LocalPlayer.Character.Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+    if _env.NoStun == true and game.Players.LocalPlayer.Character.Humanoid.WalkSpeed < 16 then
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+    end
+end)
+
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    game.Players.LocalPlayer.Character.Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+        if _env.NoStun == true and game.Players.LocalPlayer.Character.Humanoid.WalkSpeed < 16 then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        end
+    end)
+end)
+
+KillerSurvival:AddToggle("NS",{
+    Text = "去除前摇 后摇 缓慢动作",
+    Callback = function(v)
+        _env.NoStun = v
+    end
+})
+
+KillerSurvival:AddDivider()
+
+KillerSurvival:AddSlider("SB",{
+    Text = "速度调节",
+    Min = 0, Max = 3,
+    Default = 1, Compact = true,
+    Rounding = 1,
+    Callback = function(v)
+        _env.SpeedBoostValue = v
+    end
+})
+
+_env.SpeedBoostValue = 1
+
+KillerSurvival:AddToggle("SB",{
+    Text = "启用速度",
+    Callback = function(v)
+        _env.SpeedBoost = v
+        while _env.SpeedBoost do
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame += game.Players.LocalPlayer.Character.Humanoid.MoveDirection * _env.SpeedBoostValue
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CanCollide = true
+            task.wait()
+        end
+    end
+})
+
+KillerSurvival:AddToggle('MyToggle', {
+    Text = '显示聊天框丨需要每局开一次',
+    Default = false,
+    Tooltip = '显示聊天框',
+    Callback = function(state)
+    if state then
+    game.TextChatService.ChatWindowConfiguration.Enabled = true
+    else
+    game.TextChatService.ChatWindowConfiguration.Enabled = false    
+    end
+    end
+})
+
+
+local MainTabbox = Tabs.Main:AddRightTabbox()
+local Lighting = MainTabbox:AddTab("亮度调节")
+
+Lighting:AddSlider("B",{
+    Text = "亮度数值",
+    Min = 0,
+    Default = 0,
+    Max = 3,
+    Rounding = 1,
+    Compact = true,
+    Callback = function(v)
+        _env.Brightness = v
+    end
+})
+
+Lighting:AddToggle("无阴影",{
+    Text = "无阴影",
+    Default = false,
+    Callback = function(v)
+        _env.GlobalShadows = v
+    end
+})
+
+Lighting:AddToggle("除雾",{
+    Text = "除雾",
+    Default = false,
+    Callback = function(v)
+        _env.NoFog = v
+    end
+})
+
+Lighting:AddDivider()
+
+Lighting:AddToggle("启用功能",{
+    Text = "启用",
+    Default = false,
+    Callback = function(v)
+        _env.Fullbright = v
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if not game.Lighting:GetAttribute("FogStart") then 
+                game.Lighting:SetAttribute("FogStart", game.Lighting.FogStart) 
+            end
+            if not game.Lighting:GetAttribute("FogEnd") then 
+                game.Lighting:SetAttribute("FogEnd", game.Lighting.FogEnd) 
+            end
+            game.Lighting.FogStart = _env.NoFog and 0 or game.Lighting:GetAttribute("FogStart")
+            game.Lighting.FogEnd = _env.NoFog and math.huge or game.Lighting:GetAttribute("FogEnd")
+            
+            local fog = game.Lighting:FindFirstChildOfClass("Atmosphere")
+            if fog then
+                if not fog:GetAttribute("Density") then 
+                    fog:SetAttribute("Density", fog.Density) 
+                end
+                fog.Density = _env.NoFog and 0 or fog:GetAttribute("Density")
+            end
+            
+            if _env.Fullbright then
+                game.Lighting.OutdoorAmbient = Color3.new(1,1,1)
+                game.Lighting.Brightness = _env.Brightness or 0
+                game.Lighting.GlobalShadows = not _env.GlobalShadows
+            else
+                game.Lighting.OutdoorAmbient = Color3.fromRGB(55,55,55)
+                game.Lighting.Brightness = 0
+                game.Lighting.GlobalShadows = true
+            end
+        end)
+    end
+    
+})
+
+
+
+local ZZ = Tabs.Main:AddRightGroupbox('自动拾取物品')
+
+
+ZZ:AddToggle('医疗包传送并拾取', {
+    Text = '医疗包传送并互动',
+    Default = false,
+    Tooltip = '自动将医疗包传送到自己位置并互动',
+    
+    Callback = function(state)
+        autoTeleportMedkitEnabled = state
+        
+        if autoTeleportMedkitEnabled then
+            teleportMedkitThread = task.spawn(function()
+                while autoTeleportMedkitEnabled and task.wait(0.5) do
+                  
+                    local character = game.Players.LocalPlayer.Character
+                    if character and character:FindFirstChild("HumanoidRootPart") then
+                        local humanoidRootPart = character.HumanoidRootPart
+                        
+                      
+                        local medkit = workspace:FindFirstChild("Map", true)
+                        if medkit then
+                            medkit = medkit:FindFirstChild("Ingame", true)
+                            if medkit then
+                                medkit = medkit:FindFirstChild("Medkit", true)
+               
